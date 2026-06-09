@@ -473,3 +473,4 @@ fig1.savefig('9_comparativa_ESAR_NF@cit_260527.png',dpi=300)
 fig2.savefig('10_comparativa_tau_NF@cit_260527.png',dpi=300)
 fig3.savefig('11_comparativa_Hc_NF@cit_260527.png',dpi=300)
 fig6.savefig('12_comparativa_templogs_NF@cit_260527.png',dpi=300)
+#%%    
