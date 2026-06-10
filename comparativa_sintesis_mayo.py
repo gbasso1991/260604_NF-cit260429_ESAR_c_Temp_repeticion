@@ -1,4 +1,3 @@
-
 #%% Librerias y paquetes
 import numpy as np
 from uncertainties import ufloat, unumpy
@@ -8,8 +7,8 @@ from glob import glob
 import os
 import chardet
 import re
+from scipy.interpolate import interp1d
 from clase_resultados import ResultadosESAR
-
 #%% Lector de resultados
 def lector_resultados(path):
     '''
@@ -127,6 +126,59 @@ def extraer_SAR_tau(resultados):
         tau.append(meta['tau_ns'])
         Hc.append(meta['Hc_kA/m'])
     return SAR, tau, Hc
+#%% funcion banda temperatura
+def banda_temperatura(t, T, N=500, kind='linear'):
+    """
+    Interpola varias curvas T(t) sobre una grilla temporal común y
+    calcula estadísticas punto a punto.
+
+    Parameters
+    ----------
+    t : list of np.ndarray
+        Lista de vectores de tiempo.
+    T : list of np.ndarray
+        Lista de vectores de temperatura.
+    N : int, optional
+        Número de puntos de la grilla común.
+    kind : str, optional
+        Tipo de interpolación (interp1d).
+
+    Returns
+    -------
+    tt : list of np.ndarray
+        Lista original de tiempos.
+    TT : list of np.ndarray
+        Lista original de temperaturas.
+    t_common : np.ndarray
+        Grilla temporal común.
+    Tmin : np.ndarray
+        Temperatura mínima en cada instante.
+    Tmax : np.ndarray
+        Temperatura máxima en cada instante.
+    Tmean : np.ndarray
+        Temperatura promedio en cada instante.
+    """
+
+    # intervalo temporal común
+    tmin = max(tt.min() for tt in t)
+    tmax = min(tt.max() for tt in t)
+
+    t_common = np.linspace(tmin, tmax, N)
+
+    # interpolación
+    Ti = []
+    for tt, TT in zip(t, T):
+        f = interp1d(tt, TT, kind=kind)
+        Ti.append(f(t_common))
+
+    Ti = np.asarray(Ti)
+
+    # estadísticas
+    Tmin  = np.min(Ti, axis=0)
+    Tmax  = np.max(Ti, axis=0)
+    Tmean = np.mean(Ti, axis=0)
+
+    return t, T, t_common, Tmin, Tmax, Tmean
 #%% 1- 260604_NF-cit_260602_AULu_ESAR_c_Temp
 ciclos_AULu = glob("../260604_NF@cit_260602_AULu_ESAR_c_Temp/**/*ciclo_promedio_H_M.txt",recursive=True)
 resultados_AULu = glob("../260604_NF@cit_260602_AULu_ESAR_c_Temp/**/*resultados.txt",recursive=True)
@@ -156,7 +208,6 @@ ax.grid()
 ax.set_xlabel('H (kA/m)')
 ax.legend(loc='upper left',frameon=True,shadow=True,title='ESAR (W/g)')
 plt.suptitle(f'Comparativa ciclos promedio NF@cit 260527 AULu\n300 kHz & 58 kA/m')
-plt.savefig('0_ciclos_promedio_NF@cit_260527.png',dpi=300)
 
 print('Resultados AULu', '='*80,'\n')
 for r in resultados_AULu:
@@ -205,7 +256,6 @@ ax.grid()
 ax.set_xlabel('H (kA/m)')
 ax.legend(loc='upper left',frameon=True,shadow=True,title='ESAR (W/g)')
 plt.suptitle(f'Comparativa ciclos promedio NF@cit 260527 AUNdil\n300 kHz & 58 kA/m')
-plt.savefig('0_ciclos_promedio_NF@cit_260527.png',dpi=300)
 
 print('Resultados AUNdil', '='*80,'\n')
 for r in resultados_AUNdil:
@@ -253,8 +303,6 @@ ax.grid()
 ax.set_xlabel('H (kA/m)')
 ax.legend(loc='upper left',frameon=True,shadow=True,title='ESAR (W/g)')
 plt.suptitle(f'Comparativa ciclos promedio NF@cit 260527 AUV\n300 kHz & 58 kA/m')
-plt.savefig('0_ciclos_promedio_NF@cit_260527.png',dpi=300)
-
 
 res_AUV=[]
 print('Resultados AUV', '='*80,'\n')
@@ -291,7 +339,7 @@ for res in resultados_NF0527:
     print('  ',res)
 print('-'*50)
 SAR_NF0527, tau_NF0527, Hc_NF0527 = extraer_SAR_tau(resultados_NF0527)
-#%%
+
 #% ploteo
 fig40, ax =plt.subplots(figsize=(8,6),constrained_layout=True,sharey=True,sharex=True)
 ax.set_ylabel('M (A/m)')
@@ -303,7 +351,6 @@ ax.grid()
 ax.set_xlabel('H (kA/m)')
 ax.legend(loc='upper left',frameon=True,shadow=True,title='ESAR (W/g)')
 plt.suptitle(f'Comparativa ciclos promedio NF@cit 260527 NF0527\n300 kHz & 58 kA/m')
-plt.savefig('0_ciclos_promedio_NF@cit_260527.png',dpi=300)
 
 
 res_NF0527=[]
@@ -325,7 +372,7 @@ ax.set_ylabel('T (°C)')
 ax.set_xlabel('t (s)')
 ax.legend(loc='upper left',frameon=True,shadow=True,title='Warming Rate')
 plt.suptitle(f'Templogs NF@cit 260527 NF0527\n300 kHz & 58 kA/m')
-#%% Normalizo ciclos por concentracion y ploteo comparativo
+#%% 5- Normalizo ciclos por concentracion y ploteo comparativo
 
 fig5,(ax1,ax2,ax3,ax4)=plt.subplots(1,4,figsize=(18,5),constrained_layout=True,sharey=True)
 
@@ -356,8 +403,39 @@ for a in [ax1,ax2,ax3,ax4]:
     a.grid()
     a.legend(loc='upper left',frameon=True,shadow=True,title='ESAR (W/g)')
 
-#%%
-# %% ploteo comparativo de errorbars de ESAR
+#%% 6 ploteo comparativo de ciclos normalizados, excepto AULu
+
+fig6,(ax2,ax3,ax4)=plt.subplots(1,3,figsize=(15,5),constrained_layout=True,sharey=True)
+
+
+ax2.set_title(f'AUN diluida\n{conc_AUNdil} g/L')
+ax3.set_title(f'AUV\n{conc_AUV} g/L')
+ax4.set_title(f'NF0527\n{conc_NF0527} g/L')
+
+for i,_ in enumerate(ciclos_AULu):
+    _,_,_, H_AULu,M_AULu,_ = lector_ciclos(ciclos_AULu[i])
+    ax1.plot(H_AULu/1000,M_AULu/conc_AULu,'-',label=f'{SAR_AULu[i]:.3uS}')
+
+for j,_ in enumerate(ciclos_AUNdil):
+    _,_,_, H_AUNdil,M_AUNdil,_ = lector_ciclos(ciclos_AUNdil[j])
+    ax2.plot(H_AUNdil/1000,M_AUNdil/conc_AUNdil,'-',label=f'{SAR_AUNdil[j]:.3uS}')
+
+for k,_ in enumerate(ciclos_AUV):
+    _,_,_, H_AUV,M_AUV,_ = lector_ciclos(ciclos_AUV[k])
+    ax3.plot(H_AUV/1000,M_AUV/conc_AUV,'-',label=f'{SAR_AUV[k]:.3uS}')
+
+for m,_ in enumerate(ciclos_NF0527):
+    _,_,_, H_NF0527,M_NF0527,_ = lector_ciclos(ciclos_NF0527[m])
+    ax4.plot(H_NF0527/1000,M_NF0527/conc_NF0527,'-',label=f'{SAR_NF0527[m]:.3uS}')
+
+ax2.set_ylabel('M/[NPM] (Am²/kg)')
+for a in [ax2,ax3,ax4]:
+    a.set_xlabel('H (kA/m)')
+    a.grid()
+    a.legend(loc='upper left',frameon=True,shadow=True,title='ESAR (W/g)')
+
+
+#%% ploteo comparativo de errorbars de ESAR
 cuadro = '$f=300$ kHz\n$H_0=58$ kA/m'
 categorias = ['260602\nAULu', '260602\nAUN diluida', '260602\nAUV', '260527\nNF0527']
 x = np.arange(len(categorias))
@@ -471,61 +549,6 @@ ax.legend(loc='lower right',frameon=True,shadow=True,title='Muestra - Warming Ra
 ax.set_title('Comparativa templogs - $f=300$ kHz  $H_0=58$ kA/m')
 
 #%%
-import numpy as np
-from scipy.interpolate import interp1d
-
-def banda_temperatura(t, T, N=500, kind='linear'):
-    """
-    Interpola varias curvas T(t) sobre una grilla temporal común y
-    calcula estadísticas punto a punto.
-
-    Parameters
-    ----------
-    t : list of np.ndarray
-        Lista de vectores de tiempo.
-    T : list of np.ndarray
-        Lista de vectores de temperatura.
-    N : int, optional
-        Número de puntos de la grilla común.
-    kind : str, optional
-        Tipo de interpolación (interp1d).
-
-    Returns
-    -------
-    tt : list of np.ndarray
-        Lista original de tiempos.
-    TT : list of np.ndarray
-        Lista original de temperaturas.
-    t_common : np.ndarray
-        Grilla temporal común.
-    Tmin : np.ndarray
-        Temperatura mínima en cada instante.
-    Tmax : np.ndarray
-        Temperatura máxima en cada instante.
-    Tmean : np.ndarray
-        Temperatura promedio en cada instante.
-    """
-
-    # intervalo temporal común
-    tmin = max(tt.min() for tt in t)
-    tmax = min(tt.max() for tt in t)
-
-    t_common = np.linspace(tmin, tmax, N)
-
-    # interpolación
-    Ti = []
-    for tt, TT in zip(t, T):
-        f = interp1d(tt, TT, kind=kind)
-        Ti.append(f(t_common))
-
-    Ti = np.asarray(Ti)
-
-    # estadísticas
-    Tmin  = np.min(Ti, axis=0)
-    Tmax  = np.max(Ti, axis=0)
-    Tmean = np.mean(Ti, axis=0)
-
-    return t, T, t_common, Tmin, Tmax, Tmean
 #%%
 tt_1, TT_1, t_common_1, Tmin_1, Tmax_1, Tmean_1 = banda_temperatura(t1, T1)
 tt_2, TT_2, t_common_2, Tmin_2, Tmax_2, Tmean_2 = banda_temperatura(t2, T2)
@@ -537,22 +560,22 @@ labels = ['AULu', 'AUN dil', 'AUV', 'NF0527']
 fig7,(ax1,ax2) = plt.subplots(2,1,figsize=(9,8),constrained_layout=True,sharex=True)
 
 for t, T in zip(tt_1, TT_1):
-    ax1.plot(t, T, '.-', c='C0',alpha=0.3)
+    ax1.plot(t, T, '--', c='C0',alpha=0.3)
 ax1.fill_between(t_common_1, Tmin_1, Tmax_1,alpha=0.3,color='C0')
 ax1.plot(t_common_1, Tmean_1,'C0-', lw=1.5, label=f'{labels[0]} - {WR_AULu:.1uS} °C/s')
 
 for t, T in zip(tt_2, TT_2):
-    ax1.plot(t, T, '.-', c='C2',alpha=0.5)
+    ax1.plot(t, T, '--', c='C2',alpha=0.5)
 ax1.fill_between(t_common_2, Tmin_2, Tmax_2,color='C2',alpha=0.3)
 ax1.plot(t_common_2, Tmean_2,'C2', lw=1.5, label=f'{labels[1]} - {WR_AUNdil:.1uS} °C/s')
 
 for t, T in zip(tt_3, TT_3):
-    ax2.plot(t, T, '.-', c='C1',alpha=0.5)
+    ax2.plot(t, T, '--', c='C1',alpha=0.5)
 ax2.fill_between(t_common_3, Tmin_3, Tmax_3,alpha=0.3,color='C1')
 ax2.plot(t_common_3, Tmean_3,'C1', lw=1.5, label=f'{labels[2]} - {WR_AUV:.1uS} °C/s')
 
 for t, T in zip(tt_4, TT_4):
-    ax2.plot(t, T, '.-', c='C3',alpha=0.5)
+    ax2.plot(t, T, '--', c='C3',alpha=0.5)
 ax2.fill_between(t_common_4, Tmin_4, Tmax_4,alpha=0.3,color='C3')
 ax2.plot(t_common_4, Tmean_4,'C3', lw=1.5, label=f'{labels[3]} - {WR_NF0527:.1uS} °C/s')
 
@@ -565,16 +588,21 @@ plt.suptitle('Comparativa templogs - $f=300$ kHz  $H_0=58$ kA/m')
 plt.show()
 
 #%% Salvo figuras
-fig00.savefig('0_ciclos_promedio_AULu.png',dpi=300)
-fig01.savefig('1_templogs_AULu.png',dpi=300)
-fig20.savefig('2_ciclos_promedio_AUNdil.png',dpi=300)
-fig21.savefig('3_templogs_AUNdil.png',dpi=300)
-fig30.savefig('4_ciclos_promedio_AUV.png',dpi=300)
-fig31.savefig('5_templogs_AUV.png',dpi=300)
-fig40.savefig('6_ciclos_promedio_NF0527.png',dpi=300)
-fig41.savefig('7_templogs_NF0527.png',dpi=300)
-fig5.savefig('8_ciclos_promedio_normalizados.png',dpi=300)
-fig1.savefig('9_comparativa_ESAR.png',dpi=300)
+fig00.savefig('00_ciclos_promedio_AULu.png',dpi=300)
+fig01.savefig('01_templogs_AULu.png',dpi=300)
+
+fig20.savefig('02_ciclos_promedio_AUNdil.png',dpi=300)
+fig21.savefig('03_templogs_AUNdil.png',dpi=300)
+
+fig30.savefig('04_ciclos_promedio_AUV.png',dpi=300)
+fig31.savefig('05_templogs_AUV.png',dpi=300)
+
+fig40.savefig('06_ciclos_promedio_NF0527.png',dpi=300)
+fig41.savefig('07_templogs_NF0527.png',dpi=300)
+
+fig5.savefig('08_ciclos_promedio_normalizados.png',dpi=300)
+fig6.savefig('09_ciclos_promedio_normalizados_bis.png',dpi=300)
+fig1.savefig('09_comparativa_ESAR.png',dpi=300)
 fig2.savefig('10_comparativa_tau.png',dpi=300)
 fig3.savefig('11_comparativa_Hc.png',dpi=300)
 fig6.savefig('12_comparativa_templogs.png',dpi=300)
