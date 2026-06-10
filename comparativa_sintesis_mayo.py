@@ -374,7 +374,7 @@ ax.legend(loc='upper left',frameon=True,shadow=True,title='Warming Rate')
 plt.suptitle(f'Templogs NF@cit 260527 NF0527\n300 kHz & 58 kA/m')
 #%% 5- Normalizo ciclos por concentracion y ploteo comparativo
 
-fig5,(ax1,ax2,ax3,ax4)=plt.subplots(1,4,figsize=(18,5),constrained_layout=True,sharey=True)
+fig50,(ax1,ax2,ax3,ax4)=plt.subplots(1,4,figsize=(18,5),constrained_layout=True,sharey=True)
 
 ax1.set_title(f'AULu\n{conc_AULu} g/L')
 ax2.set_title(f'AUN diluida\n{conc_AUNdil} g/L')
@@ -403,9 +403,9 @@ for a in [ax1,ax2,ax3,ax4]:
     a.grid()
     a.legend(loc='upper left',frameon=True,shadow=True,title='ESAR (W/g)')
 
-#%% 6 ploteo comparativo de ciclos normalizados, excepto AULu
+#%% 5.1 ploteo comparativo de ciclos normalizados, excepto AULu
 
-fig6,(ax2,ax3,ax4)=plt.subplots(1,3,figsize=(15,5),constrained_layout=True,sharey=True)
+fig51,(ax2,ax3,ax4)=plt.subplots(1,3,figsize=(15,5),constrained_layout=True,sharey=True)
 
 
 ax2.set_title(f'AUN diluida\n{conc_AUNdil} g/L')
@@ -495,13 +495,13 @@ fig3, ax = plt.subplots(figsize=(9,5),constrained_layout=True)
 
 sep = 0.25
 for i,s in enumerate(Hc_AULu):
-    ax.bar(i*sep-2*sep, s.n, yerr=s.s, width=0.2, capsize=5, color='C0')
+    ax.bar(i*sep-1*sep, s.n, yerr=s.s, width=0.2, capsize=5, color='C0')
 for j,s in enumerate(Hc_AUNdil):
-    ax.bar(j*sep + 2*sep, s.n, yerr=s.s, width=0.2, capsize=5, color='C1')
+    ax.bar(j*sep + 3*sep, s.n, yerr=s.s, width=0.2, capsize=5, color='C1')
 for k,s in enumerate(Hc_AUV):
-    ax.bar(k*sep+6*sep, s.n, yerr=s.s, width=0.2, capsize=5, color='C2')
+    ax.bar(k*sep+7*sep, s.n, yerr=s.s, width=0.2, capsize=5, color='C2')
 for m,s in enumerate(Hc_NF0527):
-    ax.bar(m*sep+10*sep, s.n, yerr=s.s, width=0.2, capsize=5, color='C3')
+    ax.bar(m*sep+11*sep, s.n, yerr=s.s, width=0.2, capsize=5, color='C3')
 
 ax.set_xticks(x)
 ax.set_xticklabels(categorias)
@@ -520,7 +520,7 @@ WR_AUNdil = ufloat(np.mean(rates_AUNdil), np.std(rates_AUNdil))
 WR_AUV = ufloat(np.mean(rates_AUV), np.std(rates_AUV))
 WR_NF0527 = ufloat(np.mean(rates_NF0527), np.std(rates_NF0527))
 
-fig6, ax = plt.subplots(figsize=(9,5),constrained_layout=True)
+fig4, ax = plt.subplots(figsize=(9,5),constrained_layout=True)
 t1,T1=[],[]
 for i,r in enumerate(res_AULu):
     t1.append(r.time)
@@ -549,7 +549,6 @@ ax.legend(loc='lower right',frameon=True,shadow=True,title='Muestra - Warming Ra
 ax.set_title('Comparativa templogs - $f=300$ kHz  $H_0=58$ kA/m')
 
 #%%
-#%%
 tt_1, TT_1, t_common_1, Tmin_1, Tmax_1, Tmean_1 = banda_temperatura(t1, T1)
 tt_2, TT_2, t_common_2, Tmin_2, Tmax_2, Tmean_2 = banda_temperatura(t2, T2)
 tt_3, TT_3, t_common_3, Tmin_3, Tmax_3, Tmean_3 = banda_temperatura(t3, T3)
@@ -557,7 +556,7 @@ tt_4, TT_4, t_common_4, Tmin_4, Tmax_4, Tmean_4 = banda_temperatura(t4, T4)
 
 labels = ['AULu', 'AUN dil', 'AUV', 'NF0527']
 
-fig7,(ax1,ax2) = plt.subplots(2,1,figsize=(9,8),constrained_layout=True,sharex=True)
+fig5,(ax1,ax2) = plt.subplots(2,1,figsize=(9,8),constrained_layout=True,sharex=True)
 
 for t, T in zip(tt_1, TT_1):
     ax1.plot(t, T, '--', c='C0',alpha=0.3)
@@ -600,11 +599,13 @@ fig31.savefig('05_templogs_AUV.png',dpi=300)
 fig40.savefig('06_ciclos_promedio_NF0527.png',dpi=300)
 fig41.savefig('07_templogs_NF0527.png',dpi=300)
 
-fig5.savefig('08_ciclos_promedio_normalizados.png',dpi=300)
-fig6.savefig('09_ciclos_promedio_normalizados_bis.png',dpi=300)
-fig1.savefig('09_comparativa_ESAR.png',dpi=300)
-fig2.savefig('10_comparativa_tau.png',dpi=300)
-fig3.savefig('11_comparativa_Hc.png',dpi=300)
-fig6.savefig('12_comparativa_templogs.png',dpi=300)
-fig7.savefig('13_comparativa_templogs_promedio.png',dpi=300)
+fig50.savefig('08_ciclos_promedio_normalizados.png',dpi=300)
+fig51.savefig('09_ciclos_promedio_normalizados_bis.png',dpi=300)
+
+fig1.savefig('10_comparativa_ESAR.png',dpi=300)
+fig2.savefig('11_comparativa_tau.png',dpi=300)
+fig3.savefig('12_comparativa_Hc.png',dpi=300)
+fig4.savefig('13_comparativa_templogs.png',dpi=300)
+fig5.savefig('14_comparativa_templogs_promedio.png',dpi=300)
+# fig7.savefig('13_comparativa_templogs_promedio.png',dpi=300)
 #%%    
