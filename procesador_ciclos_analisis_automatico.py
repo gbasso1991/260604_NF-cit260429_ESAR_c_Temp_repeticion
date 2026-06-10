@@ -61,7 +61,7 @@ from funciones_procesado import medida_cruda, medida_cruda_autom,ajusta_seno, si
 todos=1
 un_solo_fondo=1
 resto_fondo=1
-templog = 1}
+templog = 1
 N_espiras_bob_captora=1
 nombre='*NF@cit 260429'
 Analisis_de_Fourier = 1 # sobre las señales, imprime espectro de señal muestra
